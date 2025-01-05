@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiki Fetch</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #181818;
+      color: #ffffff;
+    }
+
+    header {
+      background-color: #242424;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    header h1 {
+      font-size: 28px;
+      color: #FFA500;
+      margin: 0;
+      transition: color 0.3s, text-shadow 0.3s;
+      text-shadow: 0 0 10px #FF7F00, 0 0 20px #FFA500;
+    }
+
+    header input {
+      padding: 10px 14px;
+      border: 1px solid #555555;
+      border-radius: 5px;
+      width: 300px;
+      background-color: #333333;
+      color: #ffffff;
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    header input:hover {
+      background-color: #444444;
+      border-color: #FFA500;
+      box-shadow: 0 0 8px #FFA500;
+    }
+
+    header input:focus {
+      outline: none;
+      background-color: #444444;
+      border-color: #FF7F00;
+      box-shadow: 0 0 10px #FF7F00;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background-color: #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      background-color: #333333;
+    }
+
+    .card-content {
+      padding: 15px;
+    }
+
+    .card-content h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #FFA500;
+      transition: color 0.3s, text-shadow 0.3s;
+    }
+
+    .card-content h2:hover {
+      color: #FF7F00;
+      text-shadow: 0 0 10px #FF7F00, 0 0 20px #FFA500;
+    }
+
+    .card-content p {
+      margin: 10px 0;
+      font-size: 14px;
+      color: #b0b0b0;
+    }
+
+    .details-view {
+      display: none;
+      padding: 30px;
+      background-color: #222222;
+      color: #ffffff;
+      max-width: 900px;
+      margin: 20px auto;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s;
+    }
+
+    .details-view h1 {
+      font-size: 32px;
+      color: #FFA500;
+      text-shadow: 0 0 10px #FF7F00, 0 0 20px #FFA500;
+    }
+
+    .details-view p {
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 20px 0;
+      color: #b0b0b0;
+    }
+
+    .back-button {
+      background-color: #FFA500;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .back-button:hover {
+      background-color: #FF7F00;
+      box-shadow: 0 0 10px #FF7F00;
+    }
+
+    .line-break {
+      white-space: pre-wrap;
+    }
+
+    ::-webkit-scrollbar {
+      width: 0.1px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #343434;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #4C4D4D;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BForge Wiki</h1>
+    <input type="text" id="search" placeholder="Search..." />
+  </header>
+  <div class="container" id="card-container"></div>
+  <div id="details-view" class="details-view">
+    <button class="back-button" onclick="goBack()">Back</button>
+    <div id="details-content"></div>
+  </div>
+
+  <script>
+    const repoOwner = "AIX32";
+    const repoName = "WiKi-BForge";
+    const branch = "main";
+    const container = document.getElementById("card-container");
+    const searchInput = document.getElementById("search");
+    const detailsView = document.getElementById("details-view");
+    const detailsContent = document.getElementById("details-content");
+
+    let allData = [];
+
+    async function fetchFileList() {
+      const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents?ref=${branch}`;
+      const response = await fetch(apiUrl);
+      const files = await response.json();
+      return files.filter(file => file.name.endsWith(".txt")).map(file => file.download_url);
+    }
+
+    async function fetchFileContent(url, fileName) {
+      const response = await fetch(url);
+      const content = await response.text();
+      return parseFileContent(content, fileName);
+    }
+
+    function parseFileContent(content, fileName) {
+      const [text] = content.split("[Images]");
+      return {
+        title: fileName.replace(".txt", ""),
+        description: text.substring(0, 300) + "...",
+        content: text.trim()
+      };
+    }
+
+    async function loadFiles() {
+      const fileUrls = await fetchFileList();
+      allData = [];
+      container.innerHTML = '';
+
+      const filePromises = fileUrls.map(async fileUrl => {
+        const fileName = fileUrl.split("/").pop();
+        const data = await fetchFileContent(fileUrl, fileName);
+        return data;
+      });
+
+      const fileData = await Promise.all(filePromises);
+      allData = fileData;
+      fileData.forEach(data => createCard(data));
+    }
+
+    function createCard(data) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-content">
+          <h2>${data.title}</h2>
+          <p>${data.description}</p>
+        </div>
+      `;
+      card.onclick = () => showDetails(data);
+      container.appendChild(card);
+    }
+
+    function showDetails(data) {
+      container.style.display = "none";
+      detailsView.style.display = "block";
+
+      detailsContent.innerHTML = `
+        <h1>${data.title}</h1>
+        <p class="line-break">${data.content}</p>
+      `;
+    }
+
+    function goBack() {
+      container.style.display = "grid";
+      detailsView.style.display = "none";
+      loadFiles();
+    }
+
+    searchInput.addEventListener("input", () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      container.innerHTML = "";
+      allData
+        .filter(data => data.title.toLowerCase().includes(searchTerm))
+        .forEach(data => createCard(data));
+    });
+
+    loadFiles();
+  </script>
+</body>
+</html>
