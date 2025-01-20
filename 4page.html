@@ -222,7 +222,6 @@
             box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
         }
 
-        /* Scrollbar Styles */
         ::-webkit-scrollbar {
             width: 10px;
         }
@@ -251,10 +250,10 @@
                 </svg>
             </button>
             <div class="search-filter-menu" id="searchFilterMenu">
-                <div class="filter-option" data-filter="name">Search in Name</div>
-                <div class="filter-option" data-filter="lobbyType">Search in Lobby Type</div>
-                <div class="filter-option" data-filter="lobbyNumber">Search in Lobby Number/Name</div>
-                <div class="filter-option" data-filter="description">Search in Description</div>
+                <div class="filter-option" data-filter="name">Name</div>
+                <div class="filter-option" data-filter="lobbyType">Lobby Type</div>
+                <div class="filter-option" data-filter="lobbyNumber">Lobby Number/Name</div>
+                <div class="filter-option" data-filter="description">Description</div>
             </div>
         </div>
     </header>
@@ -291,7 +290,7 @@
                 </div>
                 <div class="form-group" id="lobbyInputGroup">
                     <label class="form-label" id="lobbyInputLabel">Lobby Number</label>
-                    <input type="text" class="form-input" required>
+                    <input type="number" class="form-input" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Starting Price</label>
